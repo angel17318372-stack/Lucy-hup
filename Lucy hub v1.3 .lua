@@ -1,6 +1,6 @@
 --// LUCY v1.3
---// Mobile UI | Fly | Speed | Noclip | Infinite Jump | Anti-Fling local
---// LocalScript
+--// LocalScript para tu propia experiencia de Roblox
+--// Mobile + PC
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -13,425 +13,214 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 -- CONFIG
 --==================================================
 
-local Config = {
-    Speed = 80,
-    FlySpeed = 80,
-    MinSpeed = 16,
-    MaxSpeed = 250,
-    MinFlySpeed = 20,
-    MaxFlySpeed = 250,
-}
+local SpeedValue = 16
+local FlySpeed = 80
 
-local State = {
-    Speed = false,
-    KeepSpeed = false,
-    Fly = false,
-    Noclip = false,
-    InfiniteJump = false,
-    AntiFling = false,
-}
-
-local Character
-local Humanoid
-local Root
+local SpeedEnabled = false
+local FlyEnabled = false
+local NoclipEnabled = false
+local InfiniteJumpEnabled = false
+local AntiFlingEnabled = false
 
 local FlyVelocity
 local FlyGyro
 local FlyConnection
 
-local OriginalWalkSpeed = 16
-local OriginalJumpPower = 50
-
 --==================================================
--- CHARACTER
+-- LIMPIEZA
 --==================================================
 
-local function UpdateCharacter()
-    Character = Player.Character or Player.CharacterAdded:Wait()
-    Humanoid = Character:WaitForChild("Humanoid")
-    Root = Character:WaitForChild("HumanoidRootPart")
-
-    OriginalWalkSpeed = Humanoid.WalkSpeed
-    OriginalJumpPower = Humanoid.JumpPower
-
-    if State.Speed then
-        Humanoid.WalkSpeed = Config.Speed
-    end
+local OldGui = PlayerGui:FindFirstChild("LucyV1")
+if OldGui then
+    OldGui:Destroy()
 end
-
-UpdateCharacter()
 
 --==================================================
 -- GUI
 --==================================================
 
-local OldGui = PlayerGui:FindFirstChild("LucyV13")
-if OldGui then
-    OldGui:Destroy()
-end
-
 local Gui = Instance.new("ScreenGui")
-Gui.Name = "LucyV13"
+Gui.Name = "LucyV1"
 Gui.ResetOnSpawn = false
-Gui.IgnoreGuiInset = true
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 Gui.Parent = PlayerGui
 
--- Main
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.Size = UDim2.fromOffset(360, 420)
-Main.Position = UDim2.new(0.5, -180, 0.5, -210)
-Main.BackgroundColor3 = Color3.fromRGB(13, 13, 19)
+Main.Size = UDim2.fromOffset(360, 360)
+Main.Position = UDim2.new(0.5, -180, 0.5, -180)
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
 Main.BorderSizePixel = 0
 Main.Active = true
 Main.Parent = Gui
 
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 18)
-MainCorner.Parent = Main
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 18)
+Corner.Parent = Main
 
 local Stroke = Instance.new("UIStroke")
-Stroke.Color = Color3.fromRGB(65, 70, 100)
-Stroke.Thickness = 1.5
+Stroke.Color = Color3.fromRGB(75, 145, 255)
+Stroke.Thickness = 2
 Stroke.Transparency = 0.15
 Stroke.Parent = Main
 
 --==================================================
--- TOP BAR
+-- HEADER
 --==================================================
 
-local Top = Instance.new("Frame")
-Top.Size = UDim2.new(1, 0, 0, 65)
-Top.BackgroundColor3 = Color3.fromRGB(20, 20, 29)
-Top.BorderSizePixel = 0
-Top.Parent = Main
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 65)
+Header.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
+Header.BorderSizePixel = 0
+Header.Parent = Main
 
-local TopCorner = Instance.new("UICorner")
-TopCorner.CornerRadius = UDim.new(0, 18)
-TopCorner.Parent = Top
+local HeaderCorner = Instance.new("UICorner")
+HeaderCorner.CornerRadius = UDim.new(0, 18)
+HeaderCorner.Parent = Header
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -100, 1, 0)
-Title.Position = UDim2.fromOffset(20, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "LUCY v1.3"
-Title.TextColor3 = Color3.fromRGB(240, 240, 255)
+Title.Position = UDim2.fromOffset(18, 5)
+Title.Size = UDim2.new(1, -80, 0, 55)
+Title.Text = "LUCY v1"
+Title.TextColor3 = Color3.fromRGB(245, 245, 255)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 22
+Title.TextSize = 24
 Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = Top
-
-local SubTitle = Instance.new("TextLabel")
-SubTitle.Size = UDim2.new(1, -120, 0, 18)
-SubTitle.Position = UDim2.fromOffset(22, 39)
-SubTitle.BackgroundTransparency = 1
-SubTitle.Text = "MOBILE CONTROL PANEL"
-SubTitle.TextColor3 = Color3.fromRGB(130, 135, 160)
-SubTitle.Font = Enum.Font.GothamMedium
-SubTitle.TextSize = 10
-SubTitle.TextXAlignment = Enum.TextXAlignment.Left
-SubTitle.Parent = Top
+Title.Parent = Header
 
 local Close = Instance.new("TextButton")
-Close.Size = UDim2.fromOffset(42, 42)
-Close.Position = UDim2.new(1, -52, 0, 11)
-Close.BackgroundColor3 = Color3.fromRGB(40, 40, 54)
-Close.BorderSizePixel = 0
+Close.Size = UDim2.fromOffset(45, 45)
+Close.Position = UDim2.new(1, -55, 0, 10)
+Close.BackgroundColor3 = Color3.fromRGB(38, 38, 52)
 Close.Text = "×"
 Close.TextColor3 = Color3.fromRGB(255, 255, 255)
 Close.Font = Enum.Font.GothamBold
 Close.TextSize = 25
-Close.Parent = Top
+Close.BorderSizePixel = 0
+Close.Parent = Header
 
-Instance.new("UICorner", Close).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", Close).CornerRadius = UDim.new(0, 13)
+
+Close.MouseButton1Click:Connect(function()
+    Main.Visible = false
+end)
 
 --==================================================
--- TABS
+-- DRAG MÓVIL / PC
 --==================================================
 
-local Tabs = Instance.new("Frame")
-Tabs.Size = UDim2.new(1, -24, 0, 42)
-Tabs.Position = UDim2.fromOffset(12, 75)
-Tabs.BackgroundTransparency = 1
-Tabs.Parent = Main
+local dragging = false
+local dragStart
+local startPosition
 
-local TabLayout = Instance.new("UIListLayout")
-TabLayout.FillDirection = Enum.FillDirection.Horizontal
-TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-TabLayout.Padding = UDim.new(0, 7)
-TabLayout.Parent = Tabs
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
 
-local Pages = Instance.new("Frame")
-Pages.Size = UDim2.new(1, -24, 1, -130)
-Pages.Position = UDim2.fromOffset(12, 125)
-Pages.BackgroundTransparency = 1
-Pages.Parent = Main
+        dragging = true
+        dragStart = input.Position
+        startPosition = Main.Position
 
-local function CreatePage()
-    local Page = Instance.new("ScrollingFrame")
-    Page.Size = UDim2.fromScale(1, 1)
-    Page.BackgroundTransparency = 1
-    Page.BorderSizePixel = 0
-    Page.ScrollBarThickness = 3
-    Page.CanvasSize = UDim2.new(0, 0, 0, 0)
-    Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    Page.Visible = false
-    Page.Parent = Pages
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
 
-    local Layout = Instance.new("UIListLayout")
-    Layout.Padding = UDim.new(0, 9)
-    Layout.Parent = Page
+UserInputService.InputChanged:Connect(function(input)
+    if not dragging then return end
 
-    return Page
-end
+    if input.UserInputType == Enum.UserInputType.MouseMovement
+    or input.UserInputType == Enum.UserInputType.Touch then
 
-local MovementPage = CreatePage()
-local ProtectionPage = CreatePage()
-local SettingsPage = CreatePage()
+        local delta = input.Position - dragStart
 
-local function CreateTab(Text)
+        Main.Position = UDim2.new(
+            startPosition.X.Scale,
+            startPosition.X.Offset + delta.X,
+            startPosition.Y.Scale,
+            startPosition.Y.Offset + delta.Y
+        )
+    end
+end)
+
+--==================================================
+-- CONTENEDOR
+--==================================================
+
+local Content = Instance.new("ScrollingFrame")
+Content.Position = UDim2.fromOffset(10, 75)
+Content.Size = UDim2.new(1, -20, 1, -85)
+Content.BackgroundTransparency = 1
+Content.BorderSizePixel = 0
+Content.ScrollBarThickness = 4
+Content.CanvasSize = UDim2.fromOffset(0, 0)
+Content.Parent = Main
+
+local Layout = Instance.new("UIListLayout")
+Layout.Padding = UDim.new(0, 8)
+Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+Layout.Parent = Content
+
+--==================================================
+-- TOGGLE
+--==================================================
+
+local function CreateToggle(text, callback)
+
     local Button = Instance.new("TextButton")
-    Button.Size = UDim2.fromOffset(105, 40)
-    Button.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    Button.Size = UDim2.new(1, -10, 0, 48)
+    Button.BackgroundColor3 = Color3.fromRGB(27, 27, 38)
     Button.BorderSizePixel = 0
-    Button.Text = Text
-    Button.TextColor3 = Color3.fromRGB(160, 165, 185)
-    Button.Font = Enum.Font.GothamBold
-    Button.TextSize = 12
-    Button.Parent = Tabs
-
-    Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 10)
-
-    return Button
-end
-
-local MovementTab = CreateTab("MOVIMIENTO")
-local ProtectionTab = CreateTab("PROTECCIÓN")
-local SettingsTab = CreateTab("AJUSTES")
-
-local function SelectPage(Page, Button)
-    MovementPage.Visible = false
-    ProtectionPage.Visible = false
-    SettingsPage.Visible = false
-
-    MovementTab.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-    ProtectionTab.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-    SettingsTab.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-
-    MovementTab.TextColor3 = Color3.fromRGB(160, 165, 185)
-    ProtectionTab.TextColor3 = Color3.fromRGB(160, 165, 185)
-    SettingsTab.TextColor3 = Color3.fromRGB(160, 165, 185)
-
-    Page.Visible = true
-    Button.BackgroundColor3 = Color3.fromRGB(50, 100, 180)
-    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-end
-
-MovementTab.MouseButton1Click:Connect(function()
-    SelectPage(MovementPage, MovementTab)
-end)
-
-ProtectionTab.MouseButton1Click:Connect(function()
-    SelectPage(ProtectionPage, ProtectionTab)
-end)
-
-SettingsTab.MouseButton1Click:Connect(function()
-    SelectPage(SettingsPage, SettingsTab)
-end)
-
---==================================================
--- BUTTONS
---==================================================
-
-local function CreateToggle(Parent, Text, Default, Callback)
-    local Button = Instance.new("TextButton")
-    Button.Size = UDim2.new(1, -4, 0, 48)
-    Button.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
-    Button.BorderSizePixel = 0
-    Button.Text = Text .. "   OFF"
-    Button.TextColor3 = Color3.fromRGB(190, 192, 210)
+    Button.Text = text .. "   OFF"
+    Button.TextColor3 = Color3.fromRGB(190, 190, 205)
     Button.Font = Enum.Font.GothamMedium
-    Button.TextSize = 14
-    Button.Parent = Parent
+    Button.TextSize = 16
+    Button.Parent = Content
 
     Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 12)
 
-    local Enabled = Default or false
-
-    local function Refresh()
-        if Enabled then
-            Button.Text = Text .. "   ON"
-            Button.BackgroundColor3 = Color3.fromRGB(35, 115, 75)
-            Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-        else
-            Button.Text = Text .. "   OFF"
-            Button.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
-            Button.TextColor3 = Color3.fromRGB(190, 192, 210)
-        end
-    end
+    local enabled = false
 
     Button.MouseButton1Click:Connect(function()
-        Enabled = not Enabled
-        Refresh()
-        Callback(Enabled)
-    end)
 
-    Refresh()
+        enabled = not enabled
+
+        if enabled then
+            Button.Text = text .. "   ON"
+            Button.BackgroundColor3 = Color3.fromRGB(35, 105, 190)
+            Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        else
+            Button.Text = text .. "   OFF"
+            Button.BackgroundColor3 = Color3.fromRGB(27, 27, 38)
+            Button.TextColor3 = Color3.fromRGB(190, 190, 205)
+        end
+
+        callback(enabled)
+    end)
 
     return Button
 end
 
-local function CreateSlider(Parent, Text, Min, Max, Value, Callback)
-    local Holder = Instance.new("Frame")
-    Holder.Size = UDim2.new(1, -4, 0, 72)
-    Holder.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
-    Holder.BorderSizePixel = 0
-    Holder.Parent = Parent
-
-    Instance.new("UICorner", Holder).CornerRadius = UDim.new(0, 12)
-
-    local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(1, -20, 0, 25)
-    Label.Position = UDim2.fromOffset(10, 6)
-    Label.BackgroundTransparency = 1
-    Label.Text = Text .. ": " .. tostring(Value)
-    Label.TextColor3 = Color3.fromRGB(220, 220, 235)
-    Label.Font = Enum.Font.GothamMedium
-    Label.TextSize = 13
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Parent = Holder
-
-    local Bar = Instance.new("Frame")
-    Bar.Size = UDim2.new(1, -20, 0, 8)
-    Bar.Position = UDim2.fromOffset(10, 48)
-    Bar.BackgroundColor3 = Color3.fromRGB(45, 45, 58)
-    Bar.BorderSizePixel = 0
-    Bar.Parent = Holder
-
-    Instance.new("UICorner", Bar).CornerRadius = UDim.new(1, 0)
-
-    local Fill = Instance.new("Frame")
-    Fill.Size = UDim2.new((Value - Min) / (Max - Min), 0, 1, 0)
-    Fill.BackgroundColor3 = Color3.fromRGB(70, 145, 235)
-    Fill.BorderSizePixel = 0
-    Fill.Parent = Bar
-
-    Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
-
-    local Dragging = false
-
-    local function SetValue(InputX)
-        local Relative = math.clamp(
-            (InputX - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X,
-            0,
-            1
-        )
-
-        local NewValue = math.floor(Min + ((Max - Min) * Relative))
-        Value = NewValue
-
-        Fill.Size = UDim2.new(Relative, 0, 1, 0)
-        Label.Text = Text .. ": " .. tostring(NewValue)
-
-        Callback(NewValue)
-    end
-
-    Bar.InputBegan:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1
-        or Input.UserInputType == Enum.UserInputType.Touch then
-            Dragging = true
-            SetValue(Input.Position.X)
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(Input)
-        if Dragging and (
-            Input.UserInputType == Enum.UserInputType.MouseMovement
-            or Input.UserInputType == Enum.UserInputType.Touch
-        ) then
-            SetValue(Input.Position.X)
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1
-        or Input.UserInputType == Enum.UserInputType.Touch then
-            Dragging = false
-        end
-    end)
-
-    return Holder
-end
-
 --==================================================
--- MOVEMENT
+-- VELOCIDAD
 --==================================================
 
-CreateToggle(MovementPage, "🏃 Velocidad", false, function(Value)
-    State.Speed = Value
-
-    if Humanoid then
-        if Value then
-            Humanoid.WalkSpeed = Config.Speed
-        else
-            Humanoid.WalkSpeed = OriginalWalkSpeed
-        end
-    end
-end)
-
-CreateToggle(MovementPage, "🔒 Mantener velocidad", false, function(Value)
-    State.KeepSpeed = Value
-end)
-
-CreateSlider(
-    MovementPage,
-    "Velocidad",
-    Config.MinSpeed,
-    Config.MaxSpeed,
-    Config.Speed,
-    function(Value)
-        Config.Speed = Value
-
-        if State.Speed and Humanoid then
-            Humanoid.WalkSpeed = Value
-        end
-    end
-)
-
-CreateToggle(MovementPage, "✈️ Fly", false, function(Value)
-    State.Fly = Value
-
-    if Value then
-        StartFly()
-    else
-        StopFly()
-    end
-end)
-
-CreateSlider(
-    MovementPage,
-    "Fly Speed",
-    Config.MinFlySpeed,
-    Config.MaxFlySpeed,
-    Config.FlySpeed,
-    function(Value)
-        Config.FlySpeed = Value
-    end
-)
-
-CreateToggle(MovementPage, "👻 Noclip", false, function(Value)
-    State.Noclip = Value
-end)
-
-CreateToggle(MovementPage, "♾️ Infinite Jump", false, function(Value)
-    State.InfiniteJump = Value
+local SpeedButton = CreateToggle("⚡ Velocidad", function(state)
+    SpeedEnabled = state
 end)
 
 --==================================================
 -- FLY
 --==================================================
 
-function StopFly()
+local function StopFly()
+
+    FlyEnabled = false
+
     if FlyConnection then
         FlyConnection:Disconnect()
         FlyConnection = nil
@@ -447,88 +236,85 @@ function StopFly()
         FlyGyro = nil
     end
 
-    if Humanoid then
-        Humanoid.PlatformStand = false
-        Humanoid.AutoRotate = true
+    local Character = Player.Character
+    if Character then
+        local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+
+        if Humanoid then
+            Humanoid.PlatformStand = false
+        end
     end
 end
 
-function StartFly()
-    if not Character or not Humanoid or not Root then
-        UpdateCharacter()
-    end
+local function StartFly()
 
     StopFly()
 
+    local Character = Player.Character
+    if not Character then return end
+
+    local Root = Character:FindFirstChild("HumanoidRootPart")
+    local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+
+    if not Root or not Humanoid then return end
+
+    FlyEnabled = true
+
     FlyVelocity = Instance.new("BodyVelocity")
     FlyVelocity.Name = "LucyFlyVelocity"
-    FlyVelocity.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-    FlyVelocity.P = 15000
+    FlyVelocity.MaxForce = Vector3.new(
+        math.huge,
+        math.huge,
+        math.huge
+    )
     FlyVelocity.Velocity = Vector3.zero
     FlyVelocity.Parent = Root
 
     FlyGyro = Instance.new("BodyGyro")
     FlyGyro.Name = "LucyFlyGyro"
-    FlyGyro.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
-    FlyGyro.P = 15000
-    FlyGyro.D = 500
-    FlyGyro.CFrame = workspace.CurrentCamera.CFrame
+    FlyGyro.MaxTorque = Vector3.new(
+        math.huge,
+        math.huge,
+        math.huge
+    )
+    FlyGyro.P = 90000
+    FlyGyro.D = 1000
     FlyGyro.Parent = Root
 
-    Humanoid.AutoRotate = false
+    Humanoid.PlatformStand = true
 
     FlyConnection = RunService.RenderStepped:Connect(function()
-        if not State.Fly or not Root or not Root.Parent then
+
+        if not FlyEnabled then return end
+        if not Root.Parent then
+            StopFly()
             return
         end
 
         local Camera = workspace.CurrentCamera
-        local Move = Humanoid.MoveDirection
 
-        -- El joystick controla dirección horizontal.
-        -- La cámara determina hacia dónde mira el vuelo.
-        local CameraLook = Camera.CFrame.LookVector
-        local CameraRight = Camera.CFrame.RightVector
+        -- El joystick móvil alimenta MoveDirection.
+        -- En PC también funcionan WASD mediante Humanoid.
+        local Direction = Humanoid.MoveDirection
 
-        local HorizontalLook = Vector3.new(
-            CameraLook.X,
-            0,
-            CameraLook.Z
-        )
-
-        local HorizontalRight = Vector3.new(
-            CameraRight.X,
-            0,
-            CameraRight.Z
-        )
-
-        if HorizontalLook.Magnitude > 0 then
-            HorizontalLook = HorizontalLook.Unit
-        end
-
-        if HorizontalRight.Magnitude > 0 then
-            HorizontalRight = HorizontalRight.Unit
-        end
-
-        local X = Move.X
-        local Z = Move.Z
-
-        local Direction =
-            HorizontalRight * X +
-            HorizontalLook * (-Z)
-
-        -- Botón de salto móvil = subir.
-        if Humanoid.Jump then
-            Direction += Vector3.new(0, 1, 0)
-        end
-
-        -- Si no hay movimiento, permanecer en el aire.
-        if Direction.Magnitude > 0 then
+        if Direction.Magnitude > 1 then
             Direction = Direction.Unit
-            FlyVelocity.Velocity = Direction * Config.FlySpeed
-        else
-            FlyVelocity.Velocity = Vector3.zero
         end
+
+        -- Mantiene la dirección relativa a la cámara.
+        if Direction.Magnitude > 0.01 then
+            Direction = Camera.CFrame:VectorToWorldSpace(
+                Vector3.new(
+                    Direction.X,
+                    0,
+                    Direction.Z
+                )
+            )
+        else
+            Direction = Vector3.zero
+        end
+
+        FlyVelocity.Velocity = Direction * FlySpeed
 
         FlyGyro.CFrame = CFrame.lookAt(
             Root.Position,
@@ -537,195 +323,39 @@ function StartFly()
     end)
 end
 
---==================================================
--- PROTECTION
---==================================================
+CreateToggle("✈️ Fly", function(state)
 
-CreateToggle(ProtectionPage, "🛡️ Anti-Fling local", false, function(Value)
-    State.AntiFling = Value
-end)
+    FlyEnabled = state
 
-CreateToggle(ProtectionPage, "🧱 Noclip", false, function(Value)
-    State.Noclip = Value
-end)
-
-local Info = Instance.new("TextLabel")
-Info.Size = UDim2.new(1, -4, 0, 80)
-Info.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
-Info.BorderSizePixel = 0
-Info.Text =
-    "PROTECCIONES LOCALES\n\n" ..
-    "Estas opciones actúan sobre tu personaje.\n" ..
-    "No modifican ni engañan al servidor."
-Info.TextColor3 = Color3.fromRGB(175, 180, 200)
-Info.Font = Enum.Font.GothamMedium
-Info.TextSize = 12
-Info.TextWrapped = true
-Info.Parent = ProtectionPage
-
-Instance.new("UICorner", Info).CornerRadius = UDim.new(0, 12)
-
---==================================================
--- SETTINGS
---==================================================
-
-local PanelSize = Instance.new("TextButton")
-PanelSize.Size = UDim2.new(1, -4, 0, 48)
-PanelSize.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
-PanelSize.BorderSizePixel = 0
-PanelSize.Text = "📐 Tamaño del panel"
-PanelSize.TextColor3 = Color3.fromRGB(220, 220, 235)
-PanelSize.Font = Enum.Font.GothamMedium
-PanelSize.TextSize = 14
-PanelSize.Parent = SettingsPage
-
-Instance.new("UICorner", PanelSize).CornerRadius = UDim.new(0, 12)
-
-local Sizes = {
-    UDim2.fromOffset(320, 380),
-    UDim2.fromOffset(360, 420),
-    UDim2.fromOffset(410, 480),
-}
-
-local SizeIndex = 2
-
-PanelSize.MouseButton1Click:Connect(function()
-    SizeIndex += 1
-
-    if SizeIndex > #Sizes then
-        SizeIndex = 1
+    if state then
+        StartFly()
+    else
+        StopFly()
     end
 
-    Main.Size = Sizes[SizeIndex]
-end)
-
-local HideButton = Instance.new("TextButton")
-HideButton.Size = UDim2.new(1, -4, 0, 48)
-HideButton.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
-HideButton.BorderSizePixel = 0
-HideButton.Text = "👁️ Ocultar panel"
-HideButton.TextColor3 = Color3.fromRGB(220, 220, 235)
-HideButton.Font = Enum.Font.GothamMedium
-HideButton.TextSize = 14
-HideButton.Parent = SettingsPage
-
-Instance.new("UICorner", HideButton).CornerRadius = UDim.new(0, 12)
-
-local Mini = Instance.new("TextButton")
-Mini.Size = UDim2.fromOffset(55, 55)
-Mini.Position = UDim2.new(0, 20, 0.5, -25)
-Mini.BackgroundColor3 = Color3.fromRGB(30, 35, 50)
-Mini.BorderSizePixel = 0
-Mini.Text = "L"
-Mini.TextColor3 = Color3.fromRGB(255, 255, 255)
-Mini.Font = Enum.Font.GothamBold
-Mini.TextSize = 24
-Mini.Visible = false
-Mini.Parent = Gui
-
-Instance.new("UICorner", Mini).CornerRadius = UDim.new(1, 0)
-
-local MiniStroke = Instance.new("UIStroke")
-MiniStroke.Color = Color3.fromRGB(70, 145, 235)
-MiniStroke.Thickness = 2
-MiniStroke.Parent = Mini
-
-HideButton.MouseButton1Click:Connect(function()
-    Main.Visible = false
-    Mini.Visible = true
-end)
-
-Mini.MouseButton1Click:Connect(function()
-    Main.Visible = true
-    Mini.Visible = false
 end)
 
 --==================================================
--- DRAG PANEL
+-- NOCLIP
 --==================================================
 
-local Dragging = false
-local DragStart
-local StartPosition
-
-Top.InputBegan:Connect(function(Input)
-    if Input.UserInputType == Enum.UserInputType.MouseButton1
-    or Input.UserInputType == Enum.UserInputType.Touch then
-
-        Dragging = true
-        DragStart = Input.Position
-        StartPosition = Main.Position
-    end
+CreateToggle("🧱 Noclip", function(state)
+    NoclipEnabled = state
 end)
 
-UserInputService.InputChanged:Connect(function(Input)
-    if Dragging and (
-        Input.UserInputType == Enum.UserInputType.MouseMovement
-        or Input.UserInputType == Enum.UserInputType.Touch
-    ) then
+RunService.Stepped:Connect(function()
 
-        local Delta = Input.Position - DragStart
+    if not NoclipEnabled then return end
 
-        Main.Position = UDim2.new(
-            StartPosition.X.Scale,
-            StartPosition.X.Offset + Delta.X,
-            StartPosition.Y.Scale,
-            StartPosition.Y.Offset + Delta.Y
-        )
-    end
-end)
+    local Character = Player.Character
+    if not Character then return end
 
-UserInputService.InputEnded:Connect(function(Input)
-    if Input.UserInputType == Enum.UserInputType.MouseButton1
-    or Input.UserInputType == Enum.UserInputType.Touch then
-        Dragging = false
-    end
-end)
+    for _, Object in ipairs(Character:GetDescendants()) do
 
---==================================================
--- CLOSE
---==================================================
-
-Close.MouseButton1Click:Connect(function()
-    Main.Visible = false
-    Mini.Visible = true
-end)
-
---==================================================
--- CONTINUOUS SYSTEMS
---==================================================
-
-RunService.Heartbeat:Connect(function()
-    if not Character or not Character.Parent then
-        return
-    end
-
-    if State.Speed and State.KeepSpeed and Humanoid then
-        if Humanoid.WalkSpeed ~= Config.Speed then
-            Humanoid.WalkSpeed = Config.Speed
-        end
-    end
-
-    if State.Noclip then
-        for _, Object in ipairs(Character:GetDescendants()) do
-            if Object:IsA("BasePart") then
-                Object.CanCollide = false
-            end
-        end
-    end
-
-    if State.AntiFling and Root then
-        local Velocity = Root.AssemblyLinearVelocity
-
-        if Velocity.Magnitude > 180 then
-            Root.AssemblyLinearVelocity = Vector3.zero
+        if Object:IsA("BasePart") then
+            Object.CanCollide = false
         end
 
-        local Angular = Root.AssemblyAngularVelocity
-
-        if Angular.Magnitude > 100 then
-            Root.AssemblyAngularVelocity = Vector3.zero
-        end
     end
 end)
 
@@ -733,6 +363,241 @@ end)
 -- INFINITE JUMP
 --==================================================
 
+CreateToggle("⬆️ Infinite Jump", function(state)
+    InfiniteJumpEnabled = state
+end)
+
 UserInputService.JumpRequest:Connect(function()
-    if State.InfiniteJump and Humanoid then
-     
+
+    if not InfiniteJumpEnabled then return end
+
+    local Character = Player.Character
+    if not Character then return end
+
+    local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+
+    if Humanoid then
+        Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+--==================================================
+-- ANTI FLING LOCAL
+--==================================================
+
+CreateToggle("🛡️ Anti-Fling", function(state)
+
+    AntiFlingEnabled = state
+
+end)
+
+RunService.Heartbeat:Connect(function()
+
+    if not AntiFlingEnabled then return end
+
+    local Character = Player.Character
+    if not Character then return end
+
+    local Root = Character:FindFirstChild("HumanoidRootPart")
+    if not Root then return end
+
+    local Velocity = Root.AssemblyLinearVelocity
+
+    if Velocity.Magnitude > 250 then
+
+        Root.AssemblyLinearVelocity = Vector3.new(
+            math.clamp(Velocity.X, -100, 100),
+            math.clamp(Velocity.Y, -100, 100),
+            math.clamp(Velocity.Z, -100, 100)
+        )
+    end
+end)
+
+--==================================================
+-- VELOCIDAD
+--==================================================
+
+RunService.Heartbeat:Connect(function()
+
+    if not SpeedEnabled then return end
+
+    local Character = Player.Character
+    if not Character then return end
+
+    local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+
+    if Humanoid then
+        Humanoid.WalkSpeed = SpeedValue
+    end
+end)
+
+--==================================================
+-- SELECTOR DE VELOCIDAD
+--==================================================
+
+local SpeedBox = Instance.new("Frame")
+SpeedBox.Size = UDim2.new(1, -10, 0, 58)
+SpeedBox.BackgroundColor3 = Color3.fromRGB(27, 27, 38)
+SpeedBox.BorderSizePixel = 0
+SpeedBox.Parent = Content
+
+Instance.new("UICorner", SpeedBox).CornerRadius = UDim.new(0, 12)
+
+local SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Position = UDim2.fromOffset(12, 0)
+SpeedLabel.Size = UDim2.new(0.55, 0, 1, 0)
+SpeedLabel.Text = "⚡ Velocidad: " .. SpeedValue
+SpeedLabel.TextColor3 = Color3.fromRGB(235, 235, 245)
+SpeedLabel.Font = Enum.Font.GothamMedium
+SpeedLabel.TextSize = 15
+SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+SpeedLabel.Parent = SpeedBox
+
+local SpeedInput = Instance.new("TextBox")
+SpeedInput.Size = UDim2.fromOffset(105, 38)
+SpeedInput.Position = UDim2.new(1, -115, 0, 10)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+SpeedInput.Text = tostring(SpeedValue)
+SpeedInput.PlaceholderText = "16"
+SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedInput.Font = Enum.Font.GothamBold
+SpeedInput.TextSize = 15
+SpeedInput.ClearTextOnFocus = false
+SpeedInput.Parent = SpeedBox
+
+Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 9)
+
+SpeedInput.FocusLost:Connect(function()
+
+    local Number = tonumber(SpeedInput.Text)
+
+    if Number then
+
+        SpeedValue = math.clamp(Number, 1, 500)
+
+        SpeedInput.Text = tostring(SpeedValue)
+        SpeedLabel.Text = "⚡ Velocidad: " .. SpeedValue
+
+    else
+
+        SpeedInput.Text = tostring(SpeedValue)
+
+    end
+end)
+
+--==================================================
+-- FLY SPEED
+--==================================================
+
+local FlyBox = Instance.new("Frame")
+FlyBox.Size = UDim2.new(1, -10, 0, 58)
+FlyBox.BackgroundColor3 = Color3.fromRGB(27, 27, 38)
+FlyBox.BorderSizePixel = 0
+FlyBox.Parent = Content
+
+Instance.new("UICorner", FlyBox).CornerRadius = UDim.new(0, 12)
+
+local FlyLabel = Instance.new("TextLabel")
+FlyLabel.BackgroundTransparency = 1
+FlyLabel.Position = UDim2.fromOffset(12, 0)
+FlyLabel.Size = UDim2.new(0.55, 0, 1, 0)
+FlyLabel.Text = "✈️ Fly Speed: " .. FlySpeed
+FlyLabel.TextColor3 = Color3.fromRGB(235, 235, 245)
+FlyLabel.Font = Enum.Font.GothamMedium
+FlyLabel.TextSize = 15
+FlyLabel.TextXAlignment = Enum.TextXAlignment.Left
+FlyLabel.Parent = FlyBox
+
+local FlyInput = Instance.new("TextBox")
+FlyInput.Size = UDim2.fromOffset(105, 38)
+FlyInput.Position = UDim2.new(1, -115, 0, 10)
+FlyInput.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+FlyInput.Text = tostring(FlySpeed)
+FlyInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyInput.Font = Enum.Font.GothamBold
+FlyInput.TextSize = 15
+FlyInput.ClearTextOnFocus = false
+FlyInput.Parent = FlyBox
+
+Instance.new("UICorner", FlyInput).CornerRadius = UDim.new(0, 9)
+
+FlyInput.FocusLost:Connect(function()
+
+    local Number = tonumber(FlyInput.Text)
+
+    if Number then
+
+        FlySpeed = math.clamp(Number, 10, 300)
+
+        FlyInput.Text = tostring(FlySpeed)
+        FlyLabel.Text = "✈️ Fly Speed: " .. FlySpeed
+
+    else
+
+        FlyInput.Text = tostring(FlySpeed)
+
+    end
+end)
+
+--==================================================
+-- REDIMENSIONAR
+--==================================================
+
+local Resize = Instance.new("TextButton")
+Resize.Size = UDim2.fromOffset(35, 35)
+Resize.Position = UDim2.new(1, -42, 1, -42)
+Resize.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+Resize.Text = "↗"
+Resize.TextColor3 = Color3.fromRGB(180, 210, 255)
+Resize.Font = Enum.Font.GothamBold
+Resize.TextSize = 18
+Resize.BorderSizePixel = 0
+Resize.Parent = Main
+
+Instance.new("UICorner", Resize).CornerRadius = UDim.new(0, 9)
+
+local Large = false
+
+Resize.MouseButton1Click:Connect(function()
+
+    Large = not Large
+
+    if Large then
+        Main.Size = UDim2.fromOffset(430, 480)
+    else
+        Main.Size = UDim2.fromOffset(360, 360)
+    end
+end)
+
+--==================================================
+-- ACTUALIZAR SCROLL
+--==================================================
+
+local function UpdateCanvas()
+
+    Content.CanvasSize = UDim2.fromOffset(
+        0,
+        Layout.AbsoluteContentSize.Y + 15
+    )
+end
+
+Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateCanvas)
+
+UpdateCanvas()
+
+--==================================================
+-- RESPAWN
+--==================================================
+
+Player.CharacterAdded:Connect(function()
+
+    task.wait(1)
+
+    if FlyEnabled then
+        StartFly()
+    end
+
+end)
+
+print("LUCY v1.3 cargado correctamente")
