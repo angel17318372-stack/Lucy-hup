@@ -1,0 +1,900 @@
+--[[
+    ╔══════════════════════════════════════╗
+             LUCY v1.2
+       Mobile / PC Dashboard
+    ╚══════════════════════════════════════╝
+
+    Funciones:
+    • Fly móvil / PC
+    • Fly Speed
+    • WalkSpeed
+    • JumpPower
+    • Noclip
+    • Infinite Jump
+    • Anti-AFK
+    • FullBright
+    • FOV
+    • FPS / Ping
+    • Rejoin
+    • Reset Character
+    • UI Scale
+    • Panel redimensionable
+    • Menú flotante
+]]
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local Stats = game:GetService("Stats")
+local TeleportService = game:GetService("TeleportService")
+local VirtualUser = game:GetService("VirtualUser")
+
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+--------------------------------------------------
+-- CONFIG
+--------------------------------------------------
+
+local Config = {
+    Fly = false,
+    Noclip = false,
+    InfiniteJump = false,
+    AntiAFK = false,
+    FullBright = false,
+
+    FlySpeed = 80,
+    WalkSpeed = 16,
+    JumpPower = 50,
+    FOV = 70,
+    UIScale = 1
+}
+
+local Character
+local Humanoid
+local Root
+
+local function updateCharacter()
+    Character = Player.Character or Player.CharacterAdded:Wait()
+    Humanoid = Character:WaitForChild("Humanoid")
+    Root = Character:WaitForChild("HumanoidRootPart")
+end
+
+updateCharacter()
+
+Player.CharacterAdded:Connect(function()
+    task.wait(0.5)
+    updateCharacter()
+end)
+
+--------------------------------------------------
+-- GUI
+--------------------------------------------------
+
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "Lucy_v12"
+Gui.ResetOnSpawn = false
+Gui.IgnoreGuiInset = true
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Gui.Parent = PlayerGui
+
+local Scale = Instance.new("UIScale")
+Scale.Scale = Config.UIScale
+Scale.Parent = Gui
+
+--------------------------------------------------
+-- COLORS
+--------------------------------------------------
+
+local BG = Color3.fromRGB(10, 9, 14)
+local PANEL = Color3.fromRGB(17, 16, 23)
+local PANEL2 = Color3.fromRGB(23, 22, 30)
+local BUTTON = Color3.fromRGB(29, 28, 38)
+local ACCENT = Color3.fromRGB(75, 155, 255)
+local TEXT = Color3.fromRGB(240, 240, 248)
+local SUBTEXT = Color3.fromRGB(155, 153, 170)
+local GREEN = Color3.fromRGB(60, 205, 125)
+local RED = Color3.fromRGB(220, 70, 80)
+
+--------------------------------------------------
+-- MAIN
+--------------------------------------------------
+
+local Main = Instance.new("Frame")
+Main.Size = UDim2.fromOffset(560, 400)
+Main.Position = UDim2.new(0.5, -280, 0.5, -200)
+Main.BackgroundColor3 = BG
+Main.BorderSizePixel = 0
+Main.Active = true
+Main.Parent = Gui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 18)
+MainCorner.Parent = Main
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Color3.fromRGB(50, 48, 65)
+MainStroke.Thickness = 1.5
+MainStroke.Parent = Main
+
+--------------------------------------------------
+-- HEADER
+--------------------------------------------------
+
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 65)
+Header.BackgroundColor3 = PANEL
+Header.BorderSizePixel = 0
+Header.Parent = Main
+
+local HeaderCorner = Instance.new("UICorner")
+HeaderCorner.CornerRadius = UDim.new(0, 18)
+HeaderCorner.Parent = Header
+
+local Title = Instance.new("TextLabel")
+Title.BackgroundTransparency = 1
+Title.Position = UDim2.fromOffset(20, 8)
+Title.Size = UDim2.fromOffset(250, 30)
+Title.Text = "LUCY v1.2"
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 25
+Title.TextColor3 = TEXT
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Header
+
+local Status = Instance.new("TextLabel")
+Status.BackgroundTransparency = 1
+Status.Position = UDim2.fromOffset(22, 36)
+Status.Size = UDim2.fromOffset(250, 20)
+Status.Text = "●  ONLINE"
+Status.Font = Enum.Font.GothamMedium
+Status.TextSize = 12
+Status.TextColor3 = GREEN
+Status.TextXAlignment = Enum.TextXAlignment.Left
+Status.Parent = Header
+
+--------------------------------------------------
+-- CLOSE
+--------------------------------------------------
+
+local Close = Instance.new("TextButton")
+Close.Size = UDim2.fromOffset(42, 42)
+Close.Position = UDim2.new(1, -54, 0, 11)
+Close.BackgroundColor3 = BUTTON
+Close.Text = "×"
+Close.TextColor3 = TEXT
+Close.Font = Enum.Font.GothamBold
+Close.TextSize = 25
+Close.BorderSizePixel = 0
+Close.Parent = Header
+
+Instance.new("UICorner", Close).CornerRadius = UDim.new(0, 12)
+
+--------------------------------------------------
+-- SIDEBAR
+--------------------------------------------------
+
+local Sidebar = Instance.new("Frame")
+Sidebar.Size = UDim2.fromOffset(145, 320)
+Sidebar.Position = UDim2.fromOffset(12, 72)
+Sidebar.BackgroundColor3 = PANEL
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = Main
+
+Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 14)
+
+local SideLayout = Instance.new("UIListLayout")
+SideLayout.Padding = UDim.new(0, 7)
+SideLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+SideLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+SideLayout.Parent = Sidebar
+
+local SidePadding = Instance.new("UIPadding")
+SidePadding.PaddingTop = UDim.new(0, 10)
+SidePadding.Parent = Sidebar
+
+--------------------------------------------------
+-- CONTENT
+--------------------------------------------------
+
+local Content = Instance.new("Frame")
+Content.Size = UDim2.new(1, -170, 1, -78)
+Content.Position = UDim2.fromOffset(158, 72)
+Content.BackgroundColor3 = PANEL
+Content.BorderSizePixel = 0
+Content.Parent = Main
+
+Instance.new("UICorner", Content).CornerRadius = UDim.new(0, 14)
+
+--------------------------------------------------
+-- DRAG SYSTEM
+--------------------------------------------------
+
+local dragging = false
+local dragStart
+local startPos
+
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+
+        dragging = true
+        dragStart = input.Position
+        startPos = Main.Position
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if dragging and
+        (input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch) then
+
+        local delta = input.Position - dragStart
+
+        Main.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+--------------------------------------------------
+-- FLOATING BUTTON
+--------------------------------------------------
+
+local Float = Instance.new("TextButton")
+Float.Size = UDim2.fromOffset(55, 55)
+Float.Position = UDim2.new(0, 18, 0.5, -25)
+Float.BackgroundColor3 = PANEL
+Float.Text = "L"
+Float.TextColor3 = ACCENT
+Float.Font = Enum.Font.GothamBold
+Float.TextSize = 24
+Float.BorderSizePixel = 0
+Float.Visible = false
+Float.Parent = Gui
+
+Instance.new("UICorner", Float).CornerRadius = UDim.new(1, 0)
+
+Close.MouseButton1Click:Connect(function()
+    Main.Visible = false
+    Float.Visible = true
+end)
+
+Float.MouseButton1Click:Connect(function()
+    Main.Visible = true
+    Float.Visible = false
+end)
+
+--------------------------------------------------
+-- PAGE SYSTEM
+--------------------------------------------------
+
+local Pages = {}
+local TabButtons = {}
+
+local function createPage(name)
+    local Page = Instance.new("ScrollingFrame")
+    Page.Name = name
+    Page.Size = UDim2.new(1, -20, 1, -20)
+    Page.Position = UDim2.fromOffset(10, 10)
+    Page.BackgroundTransparency = 1
+    Page.BorderSizePixel = 0
+    Page.ScrollBarThickness = 3
+    Page.CanvasSize = UDim2.new()
+    Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    Page.Visible = false
+    Page.Parent = Content
+
+    local Layout = Instance.new("UIListLayout")
+    Layout.Padding = UDim.new(0, 9)
+    Layout.Parent = Page
+
+    Pages[name] = Page
+
+    return Page
+end
+
+local Home = createPage("Home")
+local Movement = createPage("Movement")
+local PlayerPage = createPage("Player")
+local Visual = createPage("Visual")
+local Settings = createPage("Settings")
+
+--------------------------------------------------
+-- TABS
+--------------------------------------------------
+
+local function createTab(text, page)
+    local Button = Instance.new("TextButton")
+
+    Button.Size = UDim2.fromOffset(125, 42)
+    Button.BackgroundColor3 = BUTTON
+    Button.BorderSizePixel = 0
+    Button.Text = text
+    Button.TextColor3 = SUBTEXT
+    Button.Font = Enum.Font.GothamMedium
+    Button.TextSize = 14
+    Button.Parent = Sidebar
+
+    Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 10)
+
+    TabButtons[page] = Button
+
+    Button.MouseButton1Click:Connect(function()
+
+        for _, p in pairs(Pages) do
+            p.Visible = false
+        end
+
+        for _, b in pairs(TabButtons) do
+            b.BackgroundColor3 = BUTTON
+            b.TextColor3 = SUBTEXT
+        end
+
+        page.Visible = true
+        Button.BackgroundColor3 = Color3.fromRGB(40, 80, 130)
+        Button.TextColor3 = TEXT
+    end)
+
+    return Button
+end
+
+createTab("⌂  Home", Home)
+createTab("✈  Movement", Movement)
+createTab("●  Player", PlayerPage)
+createTab("◉  Visual", Visual)
+createTab("⚙  Settings", Settings)
+
+Home.Visible = true
+TabButtons[Home].BackgroundColor3 = Color3.fromRGB(40, 80, 130)
+TabButtons[Home].TextColor3 = TEXT
+
+--------------------------------------------------
+-- UI HELPERS
+--------------------------------------------------
+
+local function label(parent, text)
+
+    local L = Instance.new("TextLabel")
+    L.Size = UDim2.new(1, -5, 0, 30)
+    L.BackgroundTransparency = 1
+    L.Text = text
+    L.TextColor3 = TEXT
+    L.Font = Enum.Font.GothamBold
+    L.TextSize = 17
+    L.TextXAlignment = Enum.TextXAlignment.Left
+    L.Parent = parent
+
+    return L
+end
+
+local function button(parent, text, callback)
+
+    local B = Instance.new("TextButton")
+
+    B.Size = UDim2.new(1, -5, 0, 46)
+    B.BackgroundColor3 = BUTTON
+    B.BorderSizePixel = 0
+    B.Text = text
+    B.TextColor3 = TEXT
+    B.Font = Enum.Font.GothamMedium
+    B.TextSize = 14
+    B.Parent = parent
+
+    Instance.new("UICorner", B).CornerRadius = UDim.new(0, 11)
+
+    B.MouseButton1Click:Connect(callback)
+
+    return B
+end
+
+local function toggle(parent, text, default, callback)
+
+    local state = default
+
+    local B = button(parent, text .. "   OFF", function()
+
+        state = not state
+
+        B.Text = text .. (state and "   ON" or "   OFF")
+
+        B.BackgroundColor3 =
+            state and Color3.fromRGB(35, 105, 75)
+            or BUTTON
+
+        callback(state)
+    end)
+
+    return B
+end
+
+--------------------------------------------------
+-- HOME
+--------------------------------------------------
+
+label(Home, "Welcome to Lucy")
+
+local Info = Instance.new("TextLabel")
+Info.Size = UDim2.new(1, -5, 0, 80)
+Info.BackgroundTransparency = 1
+Info.TextWrapped = true
+Info.Text = "Mobile-friendly utility hub\nDesigned for Roblox experiences."
+Info.TextColor3 = SUBTEXT
+Info.Font = Enum.Font.Gotham
+Info.TextSize = 14
+Info.TextXAlignment = Enum.TextXAlignment.Left
+Info.Parent = Home
+
+local FPSLabel = Instance.new("TextLabel")
+FPSLabel.Size = UDim2.new(1, -5, 0, 30)
+FPSLabel.BackgroundTransparency = 1
+FPSLabel.TextColor3 = TEXT
+FPSLabel.Font = Enum.Font.GothamMedium
+FPSLabel.TextSize = 14
+FPSLabel.TextXAlignment = Enum.TextXAlignment.Left
+FPSLabel.Parent = Home
+
+local PingLabel = FPSLabel:Clone()
+PingLabel.Parent = Home
+
+local ServerLabel = FPSLabel:Clone()
+ServerLabel.Parent = Home
+
+--------------------------------------------------
+-- MOVEMENT
+--------------------------------------------------
+
+label(Movement, "Movement")
+
+toggle(Movement, "✈  Fly", false, function(state)
+
+    Config.Fly = state
+
+    if Humanoid then
+        Humanoid.PlatformStand = state
+    end
+
+end)
+
+toggle(Movement, "□  Noclip", false, function(state)
+    Config.Noclip = state
+end)
+
+toggle(Movement, "↑  Infinite Jump", false, function(state)
+    Config.InfiniteJump = state
+end)
+
+label(Movement, "Walk Speed")
+
+local SpeedButton = button(
+    Movement,
+    "WalkSpeed: 16",
+    function()
+
+        Config.WalkSpeed += 10
+
+        if Config.WalkSpeed > 150 then
+            Config.WalkSpeed = 16
+        end
+
+        SpeedButton.Text =
+            "WalkSpeed: " .. Config.WalkSpeed
+    end
+)
+
+label(Movement, "Fly Speed")
+
+local FlySpeedButton = button(
+    Movement,
+    "Fly Speed: 80",
+    function()
+
+        Config.FlySpeed += 20
+
+        if Config.FlySpeed > 300 then
+            Config.FlySpeed = 40
+        end
+
+        FlySpeedButton.Text =
+            "Fly Speed: " .. Config.FlySpeed
+    end
+)
+
+--------------------------------------------------
+-- PLAYER
+--------------------------------------------------
+
+label(PlayerPage, "Player")
+
+button(PlayerPage, "↻  Reset Character", function()
+
+    if Humanoid then
+        Humanoid.Health = 0
+    end
+
+end)
+
+button(PlayerPage, "↻  Rejoin Server", function()
+
+    TeleportService:Teleport(
+        game.PlaceId,
+        Player
+    )
+
+end)
+
+toggle(PlayerPage, "◉  Anti-AFK", false, function(state)
+    Config.AntiAFK = state
+end)
+
+--------------------------------------------------
+-- VISUAL
+--------------------------------------------------
+
+label(Visual, "Visual")
+
+toggle(Visual, "☀  FullBright", false, function(state)
+
+    Config.FullBright = state
+
+    if state then
+
+        Lighting.Brightness = 3
+        Lighting.ClockTime = 14
+        Lighting.FogEnd = 100000
+        Lighting.GlobalShadows = false
+
+    else
+
+        Lighting.Brightness = 1
+        Lighting.GlobalShadows = true
+
+    end
+
+end)
+
+label(Visual, "Camera FOV")
+
+local FOVButton = button(
+    Visual,
+    "FOV: 70",
+    function()
+
+        Config.FOV += 10
+
+        if Config.FOV > 120 then
+            Config.FOV = 50
+        end
+
+        FOVButton.Text = "FOV: " .. Config.FOV
+
+        if workspace.CurrentCamera then
+            workspace.CurrentCamera.FieldOfView = Config.FOV
+        end
+
+    end
+)
+
+--------------------------------------------------
+-- SETTINGS
+--------------------------------------------------
+
+label(Settings, "Settings")
+
+local UIScaleButton
+
+UIScaleButton = button(
+    Settings,
+    "UI Scale: 100%",
+    function()
+
+        Config.UIScale += 0.1
+
+        if Config.UIScale > 1.4 then
+            Config.UIScale = 0.7
+        end
+
+        Scale.Scale = Config.UIScale
+
+        UIScaleButton.Text =
+            "UI Scale: "
+            .. math.floor(Config.UIScale * 100)
+            .. "%"
+
+    end
+)
+
+button(Settings, "↺  Restore UI", function()
+
+    Config.UIScale = 1
+    Scale.Scale = 1
+
+    Main.Size = UDim2.fromOffset(560, 400)
+
+end)
+
+--------------------------------------------------
+-- FLY ENGINE
+--------------------------------------------------
+
+local FlyVelocity
+local FlyGyro
+
+local function startFly()
+
+    if not Root then
+        updateCharacter()
+    end
+
+    if FlyVelocity then
+        FlyVelocity:Destroy()
+    end
+
+    if FlyGyro then
+        FlyGyro:Destroy()
+    end
+
+    FlyVelocity = Instance.new("BodyVelocity")
+    FlyVelocity.Name = "LucyFlyVelocity"
+    FlyVelocity.MaxForce =
+        Vector3.new(1e9, 1e9, 1e9)
+    FlyVelocity.Velocity = Vector3.zero
+    FlyVelocity.Parent = Root
+
+    FlyGyro = Instance.new("BodyGyro")
+    FlyGyro.Name = "LucyFlyGyro"
+    FlyGyro.MaxTorque =
+        Vector3.new(1e9, 1e9, 1e9)
+    FlyGyro.P = 50000
+    FlyGyro.Parent = Root
+
+end
+
+local function stopFly()
+
+    if FlyVelocity then
+        FlyVelocity:Destroy()
+        FlyVelocity = nil
+    end
+
+    if FlyGyro then
+        FlyGyro:Destroy()
+        FlyGyro = nil
+    end
+
+    if Humanoid then
+        Humanoid.PlatformStand = false
+    end
+
+end
+
+--------------------------------------------------
+-- FLY MOVEMENT
+--------------------------------------------------
+
+RunService.RenderStepped:Connect(function()
+
+    if Config.Fly and Root and Humanoid then
+
+        if not FlyVelocity then
+            startFly()
+        end
+
+        local Camera =
+            workspace.CurrentCamera
+
+        local move =
+            Humanoid.MoveDirection
+
+        local vertical = 0
+
+        -- PC
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then
+            vertical += 1
+        end
+
+        if UIS:IsKeyDown(Enum.KeyCode.LeftControl)
+        or UIS:IsKeyDown(Enum.KeyCode.LeftShift) then
+            vertical -= 1
+        end
+
+        -- Mobile:
+        -- joystick controla X/Z
+        -- botones/Jump permiten vertical
+
+        if Humanoid.Jump then
+            vertical += 1
+        end
+
+        local velocity =
+            move * Config.FlySpeed
+            + Vector3.new(
+                0,
+                vertical * Config.FlySpeed,
+                0
+            )
+
+        FlyVelocity.Velocity = velocity
+
+        if move.Magnitude > 0.05 then
+
+            FlyGyro.CFrame =
+                CFrame.lookAt(
+                    Root.Position,
+                    Root.Position + move
+                )
+
+        end
+
+    else
+
+        if FlyVelocity then
+            stopFly()
+        end
+
+    end
+
+end)
+
+--------------------------------------------------
+-- NOCLIP
+--------------------------------------------------
+
+RunService.Stepped:Connect(function()
+
+    if Config.Noclip and Character then
+
+        for _, object in ipairs(
+            Character:GetDescendants()
+        ) do
+
+            if object:IsA("BasePart") then
+                object.CanCollide = false
+            end
+
+        end
+
+    end
+
+end)
+
+--------------------------------------------------
+-- WALK SPEED / JUMP
+--------------------------------------------------
+
+RunService.Heartbeat:Connect(function()
+
+    if Humanoid then
+
+        if not Config.Fly then
+            Humanoid.WalkSpeed =
+                Config.WalkSpeed
+        end
+
+    end
+
+end)
+
+UIS.JumpRequest:Connect(function()
+
+    if Config.InfiniteJump
+    and Humanoid then
+
+        Humanoid:ChangeState(
+            Enum.HumanoidStateType.Jumping
+        )
+
+    end
+
+end)
+
+--------------------------------------------------
+-- ANTI AFK
+--------------------------------------------------
+
+Player.Idled:Connect(function()
+
+    if Config.AntiAFK then
+
+        VirtualUser:CaptureController()
+
+        VirtualUser:ClickButton2(
+            Vector2.new(0, 0)
+        )
+
+    end
+
+end)
+
+--------------------------------------------------
+-- FPS
+--------------------------------------------------
+
+local lastTime = os.clock()
+local frames = 0
+local FPS = 0
+
+RunService.RenderStepped:Connect(function()
+
+    frames += 1
+
+    local now = os.clock()
+
+    if now - lastTime >= 1 then
+
+        FPS = frames
+        frames = 0
+        lastTime = now
+
+    end
+
+end)
+
+--------------------------------------------------
+-- INFO UPDATE
+--------------------------------------------------
+
+task.spawn(function()
+
+    while Gui.Parent do
+
+        task.wait(1)
+
+        local ping = "N/A"
+
+        pcall(function()
+
+            local network =
+                Stats:FindFirstChild("Network")
+
+            if network then
+
+                local serverStats =
+                    network:FindFirstChild("ServerStatsItem")
+
+                if serverStats then
+
+                    local item =
+                        serverStats:FindFirstChild("Data Ping")
+
+                    if item then
+                        ping =
+                            math.floor(
+                                item:GetValue()
+                            ) .. " ms"
+                    end
+
+                end
+
+            end
+
+        end)
+
+        FPSLabel.Text =
+            "▣  FPS: " .. FPS
+
+        PingLabel.Text =
+            "◉  Ping: " .. ping
+
+        ServerLabel.Text =
+            "◆  Players: "
+            .. #Players:GetPlayers()
+
+    end
+
+end)
+
+--------------------------------------------------
+-- RESPAWN HANDLER
+---------------------------------
