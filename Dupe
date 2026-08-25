@@ -1,0 +1,46 @@
+local player = game.Players.LocalPlayer
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+screenGui.ResetOnSpawn = false
+-- Crear el botón "Reset"
+local resetButton = Instance.new("TextButton")
+resetButton.Size = UDim2.new(0, 40, 0, 40) -- Tamaño más pequeño
+resetButton.Position = UDim2.new(0.5, -20, 0.1, 0)
+resetButton.Text = "Reset"
+resetButton.BackgroundColor3 = Color3.new(1, 0, 0)
+resetButton.TextColor3 = Color3.new(1, 1, 1)
+resetButton.BackgroundTransparency = 0.5
+resetButton.Parent = screenGui
+resetButton.TextScaled = true
+resetButton.AutoButtonColor = false
+resetButton.BorderSizePixel = 0
+-- Hacer el botón redondo
+local corner = Instance.new("UICorner", resetButton)
+corner.CornerRadius = UDim.new(0, 20) -- Radio ajustado para un botón más pequeño
+-- Función para reiniciar el personaje
+local function resetCharacter()
+local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+if humanoid then humanoid.Health = 0 end
+end
+-- Crear el botón "X" para quitar el botón de reset
+local closeButton = Instance.new("TextButton", resetButton)
+closeButton.Size = UDim2.new(0, 12, 0, 12) -- Tamaño más pequeño
+closeButton.Position = UDim2.new(1, -15, 0, 0) -- Ajustar posición
+closeButton.Text = "X"
+closeButton.BackgroundColor3 = Color3.new(0.8, 0, 0)
+closeButton.TextColor3 = Color3.new(1, 1, 1)
+closeButton.BackgroundTransparency = 0.5
+closeButton.BorderSizePixel = 0
+-- Conectar el evento del botón "X"
+closeButton.MouseButton1Click:Connect(function()
+resetButton:Destroy()
+end)
+-- Funcionalidad para arrastrar el botón
+local UIS = game:GetService("UserInputService")
+local dragging, dragStart, startPos = false, nil, nil
+resetButton.InputBegan:Connect(function(input)
+if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+dragging = true
+dragStart, startPos = input.Position, resetButton.Position
+input.Changed:Connect(function()
+if input.UserInputState == Enum.UserInputState.End then
+draggi
