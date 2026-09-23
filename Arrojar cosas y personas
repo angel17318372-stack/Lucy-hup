@@ -1,0 +1,510 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+--<font face="GothamBlack" color="rgb(7,255,0)">GRAB</font>
+--<font face="GothamBlack" color="rgb(255,0,0)">OP</font>
+--<font face="GothamBlack" color="rgb(39,245,218)">PREMIUM</font>
+--<font face="GothamBlack" color="rgb(255,251,0)">BLOBMAN</font>
+
+-- FULL ADMIN SYSTEM
+------------------------------------------------------------------
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TextChatService = game:GetService("TextChatService")
+
+local LocalPlayer = Players.LocalPlayer
+
+------------------------------------------------------------------
+
+-- Cleaned Bloody v2
+
+local UserInputService = game:GetService("UserInputService")
+local Debris = game:GetService("Debris")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+local camera = Workspace.CurrentCamera
+camera.CameraType = Enum.CameraType.Custom
+LocalPlayer.CameraMode = Enum.CameraMode.Classic
+
+-- Remotes
+local GrabEvents = ReplicatedStorage:WaitForChild("GrabEvents")
+local SetNetworkOwner = GrabEvents:WaitForChild("SetNetworkOwner")
+local DestroyGrabLine = GrabEvents:WaitForChild("DestroyGrabLine")
+local CreateGrabLine = GrabEvents:WaitForChild("CreateGrabLine", 3)
+local MenuToys = ReplicatedStorage:WaitForChild("MenuToys")
+local SpawnToyRF = MenuToys:WaitForChild("SpawnToyRemoteFunction")
+local DestroyToyRF = MenuToys:FindFirstChild("DestroyToy")
+local CharacterEvents = ReplicatedStorage:WaitForChild("CharacterEvents")
+local RagdollRemote = CharacterEvents:WaitForChild("RagdollRemote")
+
+-- UI Window
+local Window = Rayfield:CreateWindow({
+   Name = "ðŸ©¸ Bloody V2 ðŸ©¸ [PREMIUM] BETA",
+   Icon = 0,
+   LoadingTitle = "ðŸ©¸ Bloody V2 ðŸ©¸ [PREMIUM] BETA",
+   LoadingSubtitle = "by Bloody",
+   ShowText = "test",
+   Theme = {
+      TextColor = Color3.fromRGB(240, 240, 240),
+Background = Color3.fromRGB(10, 10, 10),
+Topbar = Color3.fromRGB(10, 10, 10),
+Shadow = Color3.fromRGB(255, 50, 50),
+NotificationBackground = Color3.fromRGB(10, 10, 10),
+NotificationActionsBackground = Color3.fromRGB(230, 230, 230),
+TabBackground = Color3.fromRGB(10, 10, 10),
+TabStroke = Color3.fromRGB(255, 50, 50),
+TabBackgroundSelected = Color3.fromRGB(255, 50, 50),
+TabTextColor = Color3.fromRGB(240, 240, 240),
+SelectedTabTextColor = Color3.fromRGB(50, 50, 50),
+ElementBackground = Color3.fromRGB(10, 10, 10),
+ElementBackgroundHover = Color3.fromRGB(10, 10, 10),
+SecondaryElementBackground = Color3.fromRGB(10, 10, 10),
+ElementStroke = Color3.fromRGB(255, 50, 50),
+SecondaryElementStroke = Color3.fromRGB(10, 10, 10),
+SliderBackground = Color3.fromRGB(10, 10, 10),
+SliderProgress = Color3.fromRGB(10, 10, 10),
+SliderStroke = Color3.fromRGB(255, 50, 50),
+ToggleBackground = Color3.fromRGB(10, 10, 10),
+ToggleEnabled = Color3.fromRGB(0, 255, 0),
+ToggleDisabled = Color3.fromRGB(255, 0, 0),
+ToggleEnabledStroke = Color3.fromRGB(10, 10, 10),
+ToggleDisabledStroke = Color3.fromRGB(10, 10, 10),
+ToggleEnabledOuterStroke = Color3.fromRGB(255, 50, 50),
+ToggleDisabledOuterStroke = Color3.fromRGB(255, 50, 50),
+DropdownSelected = Color3.fromRGB(10, 10, 10),
+DropdownUnselected = Color3.fromRGB(10, 10, 10),
+InputBackground = Color3.fromRGB(10, 10, 10),
+InputStroke = Color3.fromRGB(255, 50, 50),
+PlaceholderColor = Color3.fromRGB(10, 10, 10)
+
+   },
+   ToggleUIKeybind = "M",
+   DisableRayfieldPrompts = false,
+   DisableBuildWarnings = false,
+   ConfigurationSaving = { Enabled = true, FolderName = nil, FileName = "Bloody V2" },
+   Discord = { Enabled = true, Invite = "https://discord.gg/bpMXbpCkcB", RememberJoins = true },
+   KeySystem = false,
+   KeySettings = {
+      Title = "Bloody V2 [PREMIUM] BETA",
+      Subtitle = "Key System",
+      Note = 'Premium Edition',
+      FileName = "Key",
+      SaveKey = trfalseue,
+      GrabKeyFromSite = true,
+      Key = {"a"}
+   }
+})
+
+-- Tabs LineTab
+local MainTab = Window:CreateTab("Player", 7743871002)
+local invTab = Window:CreateTab("Invincibility", 7734056608)
+local GrabLinesTab = Window:CreateTab("Grab & Lines", 7485051715)
+local LoopTab = Window:CreateTab("Loop", 7734058599)
+local AuraTab = Window:CreateTab("Player Aura", 7733666258)
+local ESPTab = Window:CreateTab("ESP", 7733774602)
+local KeybindTab = Window:CreateTab("Keybind", 11710306232)
+local InfoTab = Window:CreateTab("Information", 4483362458)
+
+-- Helpers
+local function notify(title, content)
+    pcall(function()
+        if Rayfield and Rayfield.Notify then
+            Rayfield:Notify({Title = title, Content = content, Duration = 3})
+        end
+    end)
+end
+
+local function cleanupConnections(list)
+    for i, c in ipairs(list) do
+        if c and typeof(c) == "RBXScriptConnection" then
+            c:Disconnect()
+        end
+        list[i] = nil
+    end
+end
+
+local function DisableCollisions(model)
+    for _, d in ipairs(model:GetDescendants()) do
+        if d:IsA("BasePart") then d.CanCollide = false end
+    end
+end
+
+local function setNoCollideChar(char)
+    for _, v in ipairs(char:GetDescendants()) do
+        if v:IsA("BasePart") then v.CanCollide = false end
+    end
+end
+
+local function ChangeCollision(state)
+    pcall(function()
+        local objetModel = workspace:FindFirstChild("Map")
+        if not objetModel then return end
+        local alwaysHereTweenedObjects = objetModel:FindFirstChild("AlwaysHereTweenedObjects")
+        if not alwaysHereTweenedObjects then return end
+        local ocean = alwaysHereTweenedObjects:FindFirstChild("Ocean")
+        if not ocean then return end
+        local object = ocean:FindFirstChild("Object")
+        if not object then return end
+        local objectModel = object:FindFirstChild("ObjectModel")
+        if not objectModel then return end
+        for _, part in pairs(objectModel:GetChildren()) do
+            if part:IsA("BasePart") then part.CanCollide = state end
+        end
+    end)
+end
+
+--[[======================== MAIN ========================]]--
+
+local speedEnabled, speedConnection = false, nil
+local customSpeedValue = 1
+MainTab:CreateSection("WalkSpeed")
+MainTab:CreateToggle({
+    Name = 'Enable Custom Speed		<font face="GothamBlack" color="rgb(255, 255, 255)">(CHARACTER)</font>',
+    CurrentValue = false,
+    Flag = "Player_CustomSpeed",
+    Callback = function(v)
+        speedEnabled = v
+        if speedConnection then speedConnection:Disconnect() speedConnection = nil end
+        if v then
+            speedConnection = RunService.Heartbeat:Connect(function()
+                local char = LocalPlayer.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                if hrp and hum and hum.MoveDirection.Magnitude > 0 then
+                    hrp.CFrame = hrp.CFrame + (hum.MoveDirection.Unit * customSpeedValue)
+                end
+            end)
+        end
+    end
+})
+MainTab:CreateInput({
+    Name = "Custom Speed",
+    CurrentValue = tostring(customSpeedValue),
+    PlaceholderText = "Enter speed",
+    RemoveTextAfterFocusLost = false,
+    Flag = "Player_SpeedInput",
+    Callback = function(Text)
+        local n = tonumber(Text)
+        if n and n > 0 then customSpeedValue = n end
+    end
+})
+
+-- MAIN: JumpPower
+local jumpEnabled, jumpConnection = false, nil
+local customJumpPower = 50
+MainTab:CreateSection("JumpPower")
+MainTab:CreateToggle({
+    Name = 'Enable Custom JumpPower	  <font face="GothamBlack" color="rgb(255, 255, 255)">(CHARACTER)</font>',
+    CurrentValue = false,
+    Flag = "JumpPowerToggleFlag",
+    Callback = function(v)
+        jumpEnabled = v
+        if jumpConnection then jumpConnection:Disconnect() jumpConnection = nil end
+        if v then
+            jumpConnection = RunService.Heartbeat:Connect(function()
+                local char = LocalPlayer.Character
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                if hum then hum.JumpPower = customJumpPower hum.UseJumpPower = true end
+            end)
+        else
+            local char = LocalPlayer.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if hum then hum.JumpPower = 50 hum.UseJumpPower = false end
+        end
+    end
+})
+MainTab:CreateInput({
+    Name = 'Custom JumpPower',
+    CurrentValue = tostring(customJumpPower),
+    PlaceholderText = "Enter jump power",
+    RemoveTextAfterFocusLost = false,
+    Flag = "Player_JumpPowerInput",
+    Callback = function(Text)
+        local v = tonumber(Text)
+        if v and v > 0 then customJumpPower = v end
+    end
+})
+
+-- MAIN: Infinite Jump
+local infiniteJumpEnabled = false
+MainTab:CreateToggle({
+    Name = 'Infinite Jump	 <font face="GothamBlack" color="rgb(255, 255, 255)">(CHARACTER)</font>',
+    CurrentValue = false,
+    Flag = "Player_InfiniteJump",
+    Callback = function(v) infiniteJumpEnabled = v end
+})
+UserInputService.JumpRequest:Connect(function()
+    if infiniteJumpEnabled then
+        local char = LocalPlayer.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+
+-- MAIN: Others
+MainTab:CreateSection("Others")
+MainTab:CreateToggle({
+    Name = "Infinite Zoom",
+    CurrentValue = false,
+    Flag = "Useful_InfiniteZoom",
+    Callback = function(v)
+        if v then
+            LocalPlayer.CameraMaxZoomDistance = 5000000
+            LocalPlayer.CameraMinZoomDistance = 0.5
+        else
+            LocalPlayer.CameraMaxZoomDistance = 0.5
+            LocalPlayer.CameraMinZoomDistance = 0.5
+        end
+        camera.FieldOfView = 70
+    end,
+})
+MainTab:CreateToggle({
+    Name = 'Walk on Water 	 <font face="GothamBlack" color="rgb(255, 255, 255)">(CHARACTER)</font>',
+    CurrentValue = false,
+    Flag = "Useful_WalkOnWater",
+    Callback = function(v) ChangeCollision(v) end,
+})
+
+-- MAIN: Noclip
+local noclipEnabled = false
+MainTab:CreateToggle({
+    Name = 'Enable Noclip	  <font face="GothamBlack" color="rgb(255, 255, 255)">(CHARACTER)</font>',
+    CurrentValue = false,
+    Flag = "Player_Noclip",
+    Callback = function(v) noclipEnabled = v end
+})
+RunService.Stepped:Connect(function()
+    if not noclipEnabled then return end
+    local char = LocalPlayer.Character
+    if not char then return end
+    for _, part in pairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then part.CanCollide = false end
+    end
+end)
+
+--[[======================== INVINCIBILITY ========================]]--
+
+invTab:CreateSection("Anti Grab")
+invTab:CreateButton({
+    Name = 'anti gucci     <font face="GothamBlack" color="rgb(255,251,0)">BLOBMAN</font>   <font face="GothamBlack" color="rgb(255,0,0)">OP</font>   <font face="GothamBlack" color="rgb(39,245,218)">PREMIUM</font>',
+    Callback = function()
+        character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        humanoid = character:WaitForChild("Humanoid")
+        humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        local safePosition = humanoidRootPart.Position
+        SpawnToyRF:InvokeServer("CreatureBlobman", CFrame.new(0, 50000, 0), Vector3.new(0, 60, 0))
+        local folder = Workspace:WaitForChild(LocalPlayer.Name.."SpawnedInToys", 5)
+        if folder then
+            local blobman = folder:FindFirstChild("CreatureBlobman")
+            if blobman then
+                local head = blobman:FindFirstChild("Head")
+                if head then head.Anchored = true head.CFrame = CFrame.new(0,50000,0) end
+                local seat = blobman:FindFirstChild("VehicleSeat")
+                if seat and seat:IsA("VehicleSeat") then
+                    task.wait(0.5)
+                    humanoidRootPart.CFrame = seat.CFrame + Vector3.new(0,2,0)
+                    task.wait(0.2)
+                    seat:Sit(humanoid)
+                end
+            end
+        end
+        local antiGrabConnection
+        if antiGrabConnection then antiGrabConnection:Disconnect() end
+        antiGrabConnection = RunService.Heartbeat:Connect(function()
+            if not humanoid or not humanoidRootPart then return end
+            pcall(function() RagdollRemote:FireServer(humanoidRootPart,0) end)
+        end)
+        humanoid:GetPropertyChangedSignal("Jump"):Connect(function()
+            if humanoid.Jump and humanoid.Sit then
+                safePosition = humanoidRootPart.Position
+            end
+        end)
+        task.spawn(function()
+            while humanoid.Sit do task.wait(1) end
+            task.wait(0.5)
+            humanoidRootPart.CFrame = CFrame.new(safePosition)
+        end)
+    end,
+})
+
+-- Anti Grab
+local antiGrab1T, antiGrab1AnchorT = false, true
+local antiGrabConnection = nil
+local function startAntiGrab()
+    antiGrab1T = true
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart", 5)
+    if not hrp then return end
+    if antiGrabConnection then antiGrabConnection:Disconnect() end
+    antiGrabConnection = RunService.Heartbeat:Connect(function()
+        if not antiGrab1T then return end
+        local isHeld = LocalPlayer:FindFirstChild("IsHeld")
+        if isHeld and isHeld.Value then
+            if antiGrab1AnchorT then
+                hrp.Anchored = true
+                while isHeld.Value and antiGrab1T do
+                    if CharacterEvents:FindFirstChild("Struggle") then
+                        CharacterEvents.Struggle:FireServer(LocalPlayer)
+                    end
+                    task.wait(0.01)
+                end
+                hrp.Anchored = false
+            else
+                while isHeld.Value and antiGrab1T do
+                    if CharacterEvents:FindFirstChild("Struggle") then
+                        CharacterEvents.Struggle:FireServer(LocalPlayer)
+                    end
+                    task.wait(0.01)
+                end
+            end
+        end
+    end)
+end
+local function stopAntiGrab()
+    antiGrab1T = false
+    if antiGrabConnection then antiGrabConnection:Disconnect() antiGrabConnection = nil end
+end
+invTab:CreateToggle({
+    Name = "Anti Grab",
+    CurrentValue = false,
+    Flag = "AntiGrab",
+    Callback = function(v) if v then startAntiGrab() else stopAntiGrab() end end,
+})
+
+invTab:CreateSection("Others Antis")
+-- Anti Lag
+invTab:CreateToggle({
+    Name = "Anti Lag",
+    CurrentValue = false,
+    Flag = "AntiLag",
+    Callback = function(v)
+        local playerScripts = LocalPlayer:FindFirstChild("PlayerScripts")
+        if playerScripts then
+            local s = playerScripts:FindFirstChild("CharacterAndBeamMove")
+            if s then s.Enabled = not v end
+        end
+    end,
+})
+
+-- Anti Explosion
+local antiExplodeT, antiExplodeConn = false, nil
+local antiExplodeCharConn = nil
+local function startAntiExplosion()
+    antiExplodeT = true
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart", 5)
+    if not hrp then return end
+    if antiExplodeConn then antiExplodeConn:Disconnect() end
+    antiExplodeConn = workspace.ChildAdded:Connect(function(model)
+        if not antiExplodeT then return end
+        if model.Name == "Part" then
+            if (model.Position - hrp.Position).Magnitude <= 20 then
+                hrp.Anchored = true
+                task.wait(0.02)
+                hrp.Anchored = false
+            end
+        end
+    end)
+    if antiExplodeCharConn then antiExplodeCharConn:Disconnect() end
+    antiExplodeCharConn = LocalPlayer.CharacterAdded:Connect(function(newChar)
+        if not antiExplodeT then return end
+        local newHrp = newChar:WaitForChild("HumanoidRootPart", 5)
+        if not newHrp then return end
+        if antiExplodeConn then antiExplodeConn:Disconnect() antiExplodeConn = nil end
+        antiExplodeConn = workspace.ChildAdded:Connect(function(model)
+            if not antiExplodeT then return end
+            if model.Name == "Part" then
+                if (model.Position - newHrp.Position).Magnitude <= 20 then
+                    newHrp.Anchored = true
+                    task.wait(0.02)
+                    newHrp.Anchored = false
+                end
+            end
+        end)
+    end)
+end
+local function stopAntiExplosion()
+    antiExplodeT = false
+    if antiExplodeConn then antiExplodeConn:Disconnect() antiExplodeConn = nil end
+    if antiExplodeCharConn then antiExplodeCharConn:Disconnect() antiExplodeCharConn = nil end
+end
+invTab:CreateToggle({
+    Name = "Anti Explosion",
+    CurrentValue = false,
+    Flag = "AntiExplode",
+    Callback = function(v) if v then startAntiExplosion() else stopAntiExplosion() end end,
+})
+
+-- Anti Burn
+local poisonPart = workspace.Map.FactoryIsland.PoisonContainer.ExtinguishPart
+local poisonStartPos = poisonPart.Position
+local toggleConnection, setupConnection
+invTab:CreateToggle({
+    Name = "Anti Burn",
+    CurrentValue = false,
+    Flag = "AntiBurnToggle",
+    Callback = function(v)
+        if v then
+            poisonPart.Transparency = 1
+            local function setupCharacter(char)
+                local humanoid = char:WaitForChild("Humanoid")
+                local rootPart = char:WaitForChild("HumanoidRootPart")
+                local fireDebounce = humanoid:WaitForChild("FireDebounce", 5)
+                if toggleConnection then toggleConnection:Disconnect() end
+                toggleConnection = RunService.Heartbeat:Connect(function()
+                    if not char:IsDescendantOf(workspace) then
+                        toggleConnection:Disconnect() toggleConnection = nil return
+                    end
+                    if fireDebounce and fireDebounce.Value then
+                        local target = rootPart.Position
+                        local cycle = (tick() * 3) % 3
+                        local targetPos = (cycle < 1 and target) or (cycle < 2 and poisonStartPos) or target
+                        local offset = Vector3.new(
+                            math.sin(tick() * 5) * 3,
+                            math.cos(tick() * 3) * 2,
+                            math.sin(tick() * 4) * 3
+                        )
+                        poisonPart.Position = targetPos + offset
+                        poisonPart.CFrame = poisonPart.CFrame * CFrame.Angles(
+                            math.rad(math.random(-10, 10)),
+                            math.rad(math.random(-10, 10)),
+                            math.rad(math.random(-10, 10))
+                        )
+                    else
+                        poisonPart.Position = poisonPart.Position:Lerp(poisonStartPos, 0.1)
+                    end
+                end)
+            end
+            if setupConnection then setupConnection:Disconnect() end
+            setupConnection = LocalPlayer.CharacterAdded:Connect(setupCharacter)
+            if LocalPlayer.Character then setupCharacter(LocalPlayer.Character) end
+        else
+            if toggleConnection then toggleConnection:Disconnect() toggleConnection = nil end
+            if setupConnection then setupConnection:Disconnect() setupConnection = nil end
+            poisonPart.Position = poisonStartPos
+            poisonPart.Transparency = 0
+        end
+    end,
+})
+
+-- Anti Paint
+local antiPaintConnection
+invTab:CreateToggle({
+    Name = "Anti Paint",
+    CurrentValue = false,
+    Flag = "AntiPaintToggle",
+    Callback = function(v)
+        if v then
+            local function deletePaintParts()
+                for _, descendant in pairs(workspace:GetDescendants()) do
+                    if descendant.Name == "PaintPlayerPart" then
+                        descendant:Destroy()
+                    end
+                end
+            end
+            local function handleNewPaintPart(obj)
+                if obj.Name == "PaintPlayerPart" then
+        
